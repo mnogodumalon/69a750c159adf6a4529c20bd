@@ -1,0 +1,754 @@
+# Scaffold Context — Generated File Contents
+
+These files are pre-generated. Do NOT Read them — their contents are below.
+EXCEPTION: DashboardOverview.tsx is NOT included here. You MUST Read it with the Read tool before Write.
+Your job: Analyze data (1-2 sentences), Edit Layout.tsx (title), Read then Write DashboardOverview.tsx (once), Deploy.
+index.css is pre-generated with the shared design system. Do NOT edit it.
+src/config/ai-features.ts is editable — set AI_PHOTO_SCAN['Entity'] = true to enable photo scan in dialogs.
+NEVER use Bash cat/echo/heredoc for file operations — always use Read/Write/Edit tools.
+
+Generated 23 scaffold files:
+  - src/App.tsx
+  - src/components/Layout.tsx
+  - src/components/PageShell.tsx
+  - src/pages/DashboardOverview.tsx
+  - src/components/ConfirmDialog.tsx
+  - src/components/StatCard.tsx
+  - src/index.css
+  - src/lib/ai.ts
+  - src/lib/chat-context.ts
+  - src/components/ChatWidget.tsx
+  - src/config/ai-features.ts
+  - src/lib/formatters.ts
+  - src/hooks/useDashboardData.ts
+  - src/types/enriched.ts
+  - src/lib/enrich.ts
+  - src/pages/AktivitaetenPage.tsx
+  - src/components/dialogs/AktivitaetenDialog.tsx
+  - src/pages/StimmungskategorienPage.tsx
+  - src/components/dialogs/StimmungskategorienDialog.tsx
+  - src/pages/TaeglicheStimmungPage.tsx
+  - src/components/dialogs/TaeglicheStimmungDialog.tsx
+  - src/pages/PositiveMomentePage.tsx
+  - src/components/dialogs/PositiveMomenteDialog.tsx
+
+## src/types/app.ts
+```
+// AUTOMATICALLY GENERATED TYPES - DO NOT EDIT
+
+export interface Aktivitaeten {
+  record_id: string;
+  createdat: string;
+  updatedat: string | null;
+  fields: {
+    aktivitaet_name?: string;
+    aktivitaet_beschreibung?: string;
+    aktivitaet_kategorie?: 'sport' | 'sozial' | 'kreativ' | 'natur' | 'entspannung' | 'lernen' | 'sonstiges';
+  };
+}
+
+export interface Stimmungskategorien {
+  record_id: string;
+  createdat: string;
+  updatedat: string | null;
+  fields: {
+    kategorie_name?: string;
+    kategorie_beschreibung?: string;
+    kategorie_emoji?: string;
+  };
+}
+
+export interface TaeglicheStimmung {
+  record_id: string;
+  createdat: string;
+  updatedat: string | null;
+  fields: {
+    eintrag_datum?: string; // Format: YYYY-MM-DD oder ISO String
+    eintrag_stimmung?: string; // applookup -> URL zu 'Stimmungskategorien' Record
+    eintrag_aktivitaeten?: string;
+    eintrag_notizen?: string;
+  };
+}
+
+export interface PositiveMomente {
+  record_id: string;
+  createdat: string;
+  updatedat: string | null;
+  fields: {
+    moment_zeitpunkt?: string; // Format: YYYY-MM-DD oder ISO String
+    moment_beschreibung?: string;
+    moment_stimmung?: string; // applookup -> URL zu 'Stimmungskategorien' Record
+    moment_aktivitaeten?: string;
+    moment_dankbarkeit?: string;
+  };
+}
+
+export const APP_IDS = {
+  AKTIVITAETEN: '69a750a14a90d7e3986895bf',
+  STIMMUNGSKATEGORIEN: '69a750a99c53392e0001a840',
+  TAEGLICHE_STIMMUNG: '69a750aadef3fef6ef4c2856',
+  POSITIVE_MOMENTE: '69a750abcb3d90646af3ecbe',
+} as const;
+
+// Helper Types for creating new records
+export type CreateAktivitaeten = Aktivitaeten['fields'];
+export type CreateStimmungskategorien = Stimmungskategorien['fields'];
+export type CreateTaeglicheStimmung = TaeglicheStimmung['fields'];
+export type CreatePositiveMomente = PositiveMomente['fields'];
+```
+
+## src/services/livingAppsService.ts
+```
+// AUTOMATICALLY GENERATED SERVICE
+import { APP_IDS } from '@/types/app';
+import type { Aktivitaeten, Stimmungskategorien, TaeglicheStimmung, PositiveMomente } from '@/types/app';
+
+// Base Configuration
+const API_BASE_URL = 'https://my.living-apps.de/rest';
+
+// --- HELPER FUNCTIONS ---
+export function extractRecordId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  // Extrahiere die letzten 24 Hex-Zeichen mit Regex
+  const match = url.match(/([a-f0-9]{24})$/i);
+  return match ? match[1] : null;
+}
+
+export function createRecordUrl(appId: string, recordId: string): string {
+  return `https://my.living-apps.de/rest/apps/${appId}/records/${recordId}`;
+}
+
+async function callApi(method: string, endpoint: string, data?: any) {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',  // Nutze Session Cookies für Auth
+    body: data ? JSON.stringify(data) : undefined
+  });
+  if (!response.ok) throw new Error(await response.text());
+  // DELETE returns often empty body or simple status
+  if (method === 'DELETE') return true;
+  return response.json();
+}
+
+/** Upload a file to LivingApps. Returns the file URL for use in record fields. */
+export async function uploadFile(file: File | Blob, filename?: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file, filename ?? (file instanceof File ? file.name : 'upload'));
+  const res = await fetch(`${API_BASE_URL}/files`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`File upload failed: ${res.status}`);
+  const data = await res.json();
+  return data.url;
+}
+
+export class LivingAppsService {
+  // --- AKTIVITAETEN ---
+  static async getAktivitaeten(): Promise<Aktivitaeten[]> {
+    const data = await callApi('GET', `/apps/${APP_IDS.AKTIVITAETEN}/records`);
+    return Object.entries(data).map(([id, rec]: [string, any]) => ({
+      record_id: id, ...rec
+    }));
+  }
+  static async getAktivitaetenEntry(id: string): Promise<Aktivitaeten | undefined> {
+    const data = await callApi('GET', `/apps/${APP_IDS.AKTIVITAETEN}/records/${id}`);
+    return { record_id: data.id, ...data };
+  }
+  static async createAktivitaetenEntry(fields: Aktivitaeten['fields']) {
+    return callApi('POST', `/apps/${APP_IDS.AKTIVITAETEN}/records`, { fields });
+  }
+  static async updateAktivitaetenEntry(id: string, fields: Partial<Aktivitaeten['fields']>) {
+    return callApi('PATCH', `/apps/${APP_IDS.AKTIVITAETEN}/records/${id}`, { fields });
+  }
+  static async deleteAktivitaetenEntry(id: string) {
+    return callApi('DELETE', `/apps/${APP_IDS.AKTIVITAETEN}/records/${id}`);
+  }
+
+  // --- STIMMUNGSKATEGORIEN ---
+  static async getStimmungskategorien(): Promise<Stimmungskategorien[]> {
+    const data = await callApi('GET', `/apps/${APP_IDS.STIMMUNGSKATEGORIEN}/records`);
+    return Object.entries(data).map(([id, rec]: [string, any]) => ({
+      record_id: id, ...rec
+    }));
+  }
+  static async getStimmungskategorienEntry(id: string): Promise<Stimmungskategorien | undefined> {
+    const data = await callApi('GET', `/apps/${APP_IDS.STIMMUNGSKATEGORIEN}/records/${id}`);
+    return { record_id: data.id, ...data };
+  }
+  static async createStimmungskategorienEntry(fields: Stimmungskategorien['fields']) {
+    return callApi('POST', `/apps/${APP_IDS.STIMMUNGSKATEGORIEN}/records`, { fields });
+  }
+  static async updateStimmungskategorienEntry(id: string, fields: Partial<Stimmungskategorien['fields']>) {
+    return callApi('PATCH', `/apps/${APP_IDS.STIMMUNGSKATEGORIEN}/records/${id}`, { fields });
+  }
+  static async deleteStimmungskategorienEntry(id: string) {
+    return callApi('DELETE', `/apps/${APP_IDS.STIMMUNGSKATEGORIEN}/records/${id}`);
+  }
+
+  // --- TAEGLICHE_STIMMUNG ---
+  static async getTaeglicheStimmung(): Promise<TaeglicheStimmung[]> {
+    const data = await callApi('GET', `/apps/${APP_IDS.TAEGLICHE_STIMMUNG}/records`);
+    return Object.entries(data).map(([id, rec]: [string, any]) => ({
+      record_id: id, ...rec
+    }));
+  }
+  static async getTaeglicheStimmungEntry(id: string): Promise<TaeglicheStimmung | undefined> {
+    const data = await callApi('GET', `/apps/${APP_IDS.TAEGLICHE_STIMMUNG}/records/${id}`);
+    return { record_id: data.id, ...data };
+  }
+  static async createTaeglicheStimmungEntry(fields: TaeglicheStimmung['fields']) {
+    return callApi('POST', `/apps/${APP_IDS.TAEGLICHE_STIMMUNG}/records`, { fields });
+  }
+  static async updateTaeglicheStimmungEntry(id: string, fields: Partial<TaeglicheStimmung['fields']>) {
+    return callApi('PATCH', `/apps/${APP_IDS.TAEGLICHE_STIMMUNG}/records/${id}`, { fields });
+  }
+  static async deleteTaeglicheStimmungEntry(id: string) {
+    return callApi('DELETE', `/apps/${APP_IDS.TAEGLICHE_STIMMUNG}/records/${id}`);
+  }
+
+  // --- POSITIVE_MOMENTE ---
+  static async getPositiveMomente(): Promise<PositiveMomente[]> {
+    const data = await callApi('GET', `/apps/${APP_IDS.POSITIVE_MOMENTE}/records`);
+    return Object.entries(data).map(([id, rec]: [string, any]) => ({
+      record_id: id, ...rec
+    }));
+  }
+  static async getPositiveMomenteEntry(id: string): Promise<PositiveMomente | undefined> {
+    const data = await callApi('GET', `/apps/${APP_IDS.POSITIVE_MOMENTE}/records/${id}`);
+    return { record_id: data.id, ...data };
+  }
+  static async createPositiveMomenteEntry(fields: PositiveMomente['fields']) {
+    return callApi('POST', `/apps/${APP_IDS.POSITIVE_MOMENTE}/records`, { fields });
+  }
+  static async updatePositiveMomenteEntry(id: string, fields: Partial<PositiveMomente['fields']>) {
+    return callApi('PATCH', `/apps/${APP_IDS.POSITIVE_MOMENTE}/records/${id}`, { fields });
+  }
+  static async deletePositiveMomenteEntry(id: string) {
+    return callApi('DELETE', `/apps/${APP_IDS.POSITIVE_MOMENTE}/records/${id}`);
+  }
+
+}
+```
+
+## src/App.tsx
+```
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { Layout } from '@/components/Layout';
+import DashboardOverview from '@/pages/DashboardOverview';
+import AktivitaetenPage from '@/pages/AktivitaetenPage';
+import StimmungskategorienPage from '@/pages/StimmungskategorienPage';
+import TaeglicheStimmungPage from '@/pages/TaeglicheStimmungPage';
+import PositiveMomentePage from '@/pages/PositiveMomentePage';
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<DashboardOverview />} />
+          <Route path="aktivitaeten" element={<AktivitaetenPage />} />
+          <Route path="stimmungskategorien" element={<StimmungskategorienPage />} />
+          <Route path="taegliche-stimmung" element={<TaeglicheStimmungPage />} />
+          <Route path="positive-momente" element={<PositiveMomentePage />} />
+        </Route>
+      </Routes>
+    </HashRouter>
+  );
+}
+```
+
+## src/components/Layout.tsx
+```
+import { NavLink, Outlet } from 'react-router-dom';
+import { FileText, LayoutDashboard, Menu, Tag, Tags, X } from 'lucide-react';
+import { useState } from 'react';
+import ChatWidget from '@/components/ChatWidget';
+
+// ⚡ Customize these for your app
+const APP_TITLE = 'Dashboard';
+
+const navigation = [
+  { name: 'Übersicht', href: '/', icon: LayoutDashboard },
+  { name: 'Aktivitäten', href: '/aktivitaeten', icon: FileText },
+  { name: 'Stimmungskategorien', href: '/stimmungskategorien', icon: Tag },
+  { name: 'Tägliche Stimmung', href: '/taegliche-stimmung', icon: Tags },
+  { name: 'Positive Momente', href: '/positive-momente', icon: FileText },
+];
+
+export function Layout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`
+          fixed top-0 left-0 z-50 h-full w-64 bg-sidebar border-r border-sidebar-border
+          transform transition-transform duration-200 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+        `}
+      >
+        <div className="flex items-center justify-between px-5 py-6 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <svg className="w-9 h-9 shrink-0" viewBox="0 0 57 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.6162 33.9164L20.4429 36.4084C20.4429 36.4084 13.4064 39.5929 9.85984 41.6434C7.73514 42.8719 6.93751 43.762 7.68335 44.356C8.00045 44.6086 18.7719 52.7814 19.1375 53.0247C23.2398 55.7549 15.79 45.2036 15.79 45.2036C15.79 45.2036 26.3397 41.899 28.5944 39.281C30.8491 36.6629 28.9112 33.9164 28.9112 33.9164C28.9112 33.9164 33.0253 35.5016 33.1876 39.281C33.289 41.6444 30.466 46.5779 28.9632 50.3787C28.063 52.6557 27.6349 53.4537 28.5898 53.4582C28.9958 53.4601 43.3581 53.5103 43.7947 53.4582C46.5726 53.1267 36.1923 50.3787 36.1923 50.3787C36.1923 50.3787 40.934 43.8566 42.0571 39.7543C42.7914 37.072 40.4732 33.4431 40.4732 33.4431C40.4732 33.4431 50.6098 36.1253 51.4017 35.4942C52.1937 34.8631 49.026 26.6585 49.026 26.6585C49.026 26.6585 57 22.8756 57 21.4556C57 20.0356 49.171 16.4028 49.171 16.4028C49.171 16.4028 49.8179 9.14493 48.3924 8.35603C46.967 7.56713 36.672 11.996 36.672 11.996C36.672 11.996 31.7464 3.51825 28.8955 3.51825C26.0446 3.51825 20.5168 11.996 20.5168 11.996C20.5168 11.996 11.3306 7.25157 10.0635 7.88269C8.79641 8.51381 8.47964 16.4028 8.47964 16.4028C8.47964 16.4028 0 20.1818 0 21.6019C0 23.0219 8.9548 26.6585 8.9548 26.6585C8.9548 26.6585 6.10388 35.0209 7.21257 35.4942C8.32126 35.9676 18.6162 33.9164 18.6162 33.9164Z" fill="#FF5C00"/>
+              <path d="M39.2754 22.6432C39.2754 24.6087 35.038 28.5398 28.6918 28.5398C22.3457 28.5398 18.1083 24.7599 18.1083 22.6432C18.1083 20.5265 22.3457 16.2931 28.6918 16.2931C35.038 16.2931 39.2754 20.6777 39.2754 22.6432Z" fill="white"/>
+              <path d="M31.4755 16.5827C32.7516 16.8524 33.9029 17.2929 34.9052 17.8249C36.2586 18.8904 37.1287 20.5421 37.1288 22.3981C37.1288 24.6151 35.8885 26.5416 34.0643 27.5241C33.4073 27.7869 32.6982 28.0121 31.9413 28.1823C31.7334 28.2048 31.5223 28.2174 31.3085 28.2174C28.0946 28.2172 25.4891 25.612 25.4891 22.3981C25.4892 21.683 25.6183 20.9978 25.8544 20.3649C26.2591 20.989 26.9614 21.4029 27.7606 21.403C29.0148 21.4028 30.0311 20.3857 30.0311 19.1315C30.0311 18.2656 29.5467 17.5126 28.8339 17.1295C29.5848 16.7762 30.4236 16.5788 31.3085 16.5788C31.3643 16.5788 31.42 16.5811 31.4755 16.5827Z" fill="black"/>
+            </svg>
+            <h1 className="text-sm font-semibold tracking-tight text-sidebar-foreground">{APP_TITLE}</h1>
+          </div>
+          <button
+            className="lg:hidden p-1.5 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <nav className="px-3 pt-4 space-y-0.5">
+          <p className="px-4 pb-2 text-xs font-medium text-muted-foreground">
+            Navigation
+          </p>
+          {navigation.map(item => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={item.href === '/'}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }: { isActive: boolean }) =>
+                `flex items-center px-4 py-2 rounded-2xl text-sm transition-colors ${
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                    : 'text-sidebar-foreground font-normal hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                }`
+              }
+            >
+              {item.name}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="lg:pl-64">
+        <header className="lg:hidden flex items-center gap-4 px-4 py-3 border-b bg-card sticky top-0 z-30">
+          <button
+            className="p-2 rounded-lg hover:bg-accent transition-colors"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={18} />
+          </button>
+          <span className="font-semibold text-sm">{APP_TITLE}</span>
+        </header>
+        <main className="p-6 lg:p-8 max-w-screen-2xl">
+          <Outlet />
+        </main>
+      </div>
+
+      <ChatWidget />
+    </div>
+  );
+}
+```
+
+## src/hooks/useDashboardData.ts
+```
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { Aktivitaeten, Stimmungskategorien, TaeglicheStimmung, PositiveMomente } from '@/types/app';
+import { LivingAppsService } from '@/services/livingAppsService';
+
+export function useDashboardData() {
+  const [aktivitaeten, setAktivitaeten] = useState<Aktivitaeten[]>([]);
+  const [stimmungskategorien, setStimmungskategorien] = useState<Stimmungskategorien[]>([]);
+  const [taeglicheStimmung, setTaeglicheStimmung] = useState<TaeglicheStimmung[]>([]);
+  const [positiveMomente, setPositiveMomente] = useState<PositiveMomente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchAll = useCallback(async () => {
+    setError(null);
+    try {
+      const [aktivitaetenData, stimmungskategorienData, taeglicheStimmungData, positiveMomenteData] = await Promise.all([
+        LivingAppsService.getAktivitaeten(),
+        LivingAppsService.getStimmungskategorien(),
+        LivingAppsService.getTaeglicheStimmung(),
+        LivingAppsService.getPositiveMomente(),
+      ]);
+      setAktivitaeten(aktivitaetenData);
+      setStimmungskategorien(stimmungskategorienData);
+      setTaeglicheStimmung(taeglicheStimmungData);
+      setPositiveMomente(positiveMomenteData);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Fehler beim Laden der Daten'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const aktivitaetenMap = useMemo(() => {
+    const m = new Map<string, Aktivitaeten>();
+    aktivitaeten.forEach(r => m.set(r.record_id, r));
+    return m;
+  }, [aktivitaeten]);
+
+  const stimmungskategorienMap = useMemo(() => {
+    const m = new Map<string, Stimmungskategorien>();
+    stimmungskategorien.forEach(r => m.set(r.record_id, r));
+    return m;
+  }, [stimmungskategorien]);
+
+  return { aktivitaeten, setAktivitaeten, stimmungskategorien, setStimmungskategorien, taeglicheStimmung, setTaeglicheStimmung, positiveMomente, setPositiveMomente, loading, error, fetchAll, aktivitaetenMap, stimmungskategorienMap };
+}
+```
+
+## src/types/enriched.ts
+```
+import type { PositiveMomente, TaeglicheStimmung } from './app';
+
+export type EnrichedTaeglicheStimmung = TaeglicheStimmung & {
+  eintrag_stimmungName: string;
+  eintrag_aktivitaetenName: string;
+};
+
+export type EnrichedPositiveMomente = PositiveMomente & {
+  moment_stimmungName: string;
+  moment_aktivitaetenName: string;
+};
+
+```
+
+## src/lib/enrich.ts
+```
+import type { EnrichedPositiveMomente, EnrichedTaeglicheStimmung } from '@/types/enriched';
+import type { Aktivitaeten, PositiveMomente, Stimmungskategorien, TaeglicheStimmung } from '@/types/app';
+import { extractRecordId } from '@/services/livingAppsService';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function resolveDisplay(url: string | undefined, map: Map<string, any>, ...fields: string[]): string {
+  if (!url) return '';
+  const id = extractRecordId(url);
+  if (!id) return '';
+  const r = map.get(id);
+  if (!r) return '';
+  return fields.map(f => String(r.fields[f] ?? '')).join(' ').trim();
+}
+
+interface TaeglicheStimmungMaps {
+  stimmungskategorienMap: Map<string, Stimmungskategorien>;
+  aktivitaetenMap: Map<string, Aktivitaeten>;
+}
+
+export function enrichTaeglicheStimmung(
+  taeglicheStimmung: TaeglicheStimmung[],
+  maps: TaeglicheStimmungMaps
+): EnrichedTaeglicheStimmung[] {
+  return taeglicheStimmung.map(r => ({
+    ...r,
+    eintrag_stimmungName: resolveDisplay(r.fields.eintrag_stimmung, maps.stimmungskategorienMap, 'kategorie_name'),
+    eintrag_aktivitaetenName: resolveDisplay(r.fields.eintrag_aktivitaeten, maps.aktivitaetenMap, 'aktivitaet_name'),
+  }));
+}
+
+interface PositiveMomenteMaps {
+  stimmungskategorienMap: Map<string, Stimmungskategorien>;
+  aktivitaetenMap: Map<string, Aktivitaeten>;
+}
+
+export function enrichPositiveMomente(
+  positiveMomente: PositiveMomente[],
+  maps: PositiveMomenteMaps
+): EnrichedPositiveMomente[] {
+  return positiveMomente.map(r => ({
+    ...r,
+    moment_stimmungName: resolveDisplay(r.fields.moment_stimmung, maps.stimmungskategorienMap, 'kategorie_name'),
+    moment_aktivitaetenName: resolveDisplay(r.fields.moment_aktivitaeten, maps.aktivitaetenMap, 'aktivitaet_name'),
+  }));
+}
+
+```
+
+## src/lib/formatters.ts
+```
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+
+export function formatDate(s: string | undefined) {
+  if (!s) return '—';
+  try { return format(parseISO(s), 'dd.MM.yyyy', { locale: de }); } catch { return s; }
+}
+
+export function formatCurrency(v: number | undefined) {
+  if (v == null) return '—';
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(v);
+}
+
+/** Extract display label from lookup/select or lookup/radio API response */
+export function displayLookup(val: unknown): string {
+  if (val == null) return '—';
+  if (typeof val === 'object' && val !== null && 'label' in val) return String((val as Record<string, unknown>).label);
+  return String(val);
+}
+
+/** Extract labels from multiplelookup/checkbox API response */
+export function displayMultiLookup(val: unknown): string {
+  if (val == null) return '—';
+  if (Array.isArray(val)) return val.map(v => typeof v === 'object' && v !== null && 'label' in v ? String((v as Record<string, unknown>).label) : String(v)).join(', ') || '—';
+  return displayLookup(val);
+}
+
+/** Extract key from lookup value (handles both {key,label} objects and plain strings) */
+export function lookupKey(val: unknown): string | undefined {
+  if (val == null) return undefined;
+  if (typeof val === 'object' && val !== null && 'key' in val) return String((val as Record<string, unknown>).key);
+  if (typeof val === 'string') return val;
+  return undefined;
+}
+
+/** Extract keys from multiplelookup value */
+export function lookupKeys(val: unknown): string[] {
+  if (!Array.isArray(val)) return [];
+  return val.map(v => typeof v === 'object' && v !== null && 'key' in v ? String((v as Record<string, unknown>).key) : String(v));
+}
+```
+
+## src/lib/ai.ts
+```
+const AI_ENDPOINT = "https://my.living-apps.de/litellm/v1/chat/completions";
+const AI_MODEL = "default";
+
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string | Array<{ type: string; [key: string]: unknown }>;
+};
+
+type CompletionOptions = {
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  stop?: string[];
+  response_format?: { type: string };
+};
+
+export async function chatCompletion(
+  messages: ChatMessage[],
+  options: CompletionOptions = {}
+): Promise<string> {
+  const res = await fetch(AI_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ model: AI_MODEL, messages, ...options }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`AI API ${res.status}: ${body}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+export async function safeJsonCompletion<T = unknown>(
+  messages: ChatMessage[],
+  options: CompletionOptions = {}
+): Promise<T> {
+  const raw = await chatCompletion(messages, options);
+  const match = raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+  if (!match) throw new Error(`Expected JSON but got: ${raw.slice(0, 200)}`);
+  return JSON.parse(match[0]);
+}
+
+export async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === maxAttempts) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
+  throw new Error("unreachable");
+}
+
+// --- File encoding helpers ---
+
+export function fileToDataUri(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function urlToDataUri(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to encode file"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Convert a data URI back to a Blob (for file uploads) */
+export function dataUriToBlob(dataUri: string): Blob {
+  const [header, base64] = dataUri.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream';
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// --- High-level AI features ---
+
+export async function classify(
+  text: string,
+  categories: string[]
+): Promise<{ category: string; confidence: number }> {
+  return safeJsonCompletion([
+    {
+      role: "system",
+      content: [
+        "You are a classifier. Respond ONLY with valid JSON, nothing else.",
+        'Output format: {"category": "<one of the allowed categories>", "confidence": <0-1>}',
+        `Allowed categories: ${JSON.stringify(categories)}`,
+      ].join("\n"),
+    },
+    { role: "user", content: text },
+  ], { temperature: 0 });
+}
+
+export async function extract<T = Record<string, unknown>>(
+  text: string,
+  schemaDescription: string
+): Promise<T> {
+  return safeJsonCompletion([
+    {
+      role: "system",
+      content: [
+        "You are a data extraction engine. Respond ONLY with valid JSON matching the requested schema.",
+        "If a field cannot be determined from the input, use null.",
+        `Schema:\n${schemaDescription}`,
+      ].join("\n"),
+    },
+    { role: "user", content: text },
+  ], { temperature: 0 });
+}
+
+export async function summarize(
+  text: string,
+  options: { maxSentences?: number; language?: string } = {}
+): Promise<string> {
+  const { maxSentences = 3, language } = options;
+  const instructions = [
+    `Summarize the following text in at most ${maxSentences} sentences.`,
+    "Be concise and preserve key facts.",
+  ];
+  if (language) instructions.push(`Write the summary in ${language}.`);
+  return chatCompletion([
+    { role: "system", content: instructions.join(" ") },
+    { role: "user", content: text },
+  ]);
+}
+
+export async function translate(
+  text: string,
+  targetLanguage: string,
+  sourceLanguage?: string
+): Promise<string> {
+  const from = sourceLanguage ? ` from ${sourceLanguage}` : "";
+  return chatCompletion([
+    {
+      role: "system",
+      content: `Translate the following text${from} to ${targetLanguage}. Output ONLY the translation, nothing else.`,
+    },
+    { role: "user", content: text },
+  ]);
+}
+
+export async function analyzeImage(imageDataUri: string, prompt: string): Promise<string> {
+  return chatCompletion([
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: imageDataUri } },
+      ],
+    },
+  ]);
+}
+
+export async function analyzeDocument(fileDataUri: string, prompt: string): Promise<string> {
+  return chatCompletion([
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "file", file: { file_data: fileDataUri } },
+      ],
+    },
+  ]);
+}
+
+export async function extractFromPhoto<T = Record<string, unknown>>(
+  dataUri: string,
+  schemaDescription: string
+): Promise<T> {
+  const isImage = dataUri.startsWith("data:image/");
+  const fileContent = isImage
+    ? { type: "image_url" as const, image_url: { url: dataUri } }
+    : { type: "file" as const, file: { file_data: dataUri } };
+  return safeJsonCompletion([
+    {
+      role: "system",
+      content: [
+        "Extract structured data from the provided " + (isImage ? "image" : "document") + ".",
+        "Respond ONLY with valid JSON matching the schema.",
+        "Use null for any field that cannot be determined.",
+        `Schema:\n${schemaDescription}`,
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Extract the data from this " + (isImage ? "image" : "document") + "." },
+        fileContent,
+      ],
+    },
+  ]);
+}
+
+```
+
+## src/lib/chat-context.ts
+```
+export const CHAT_SYSTEM_PROMPT = `Du bist ein hilfreicher Assistent für diese App.\n\nDie App verwaltet folgende Daten:\n- Aktivitäten: Name der Aktivität, Beschreibung, Kategorie\n- Stimmungskategorien: Name der Stimmungskategorie, Beschreibung, Emoji (optional)\n- Tägliche Stimmung: Datum (Datum), Deine Stimmung (→ Stimmungskategorien), Aktivitäten (→ Aktivitäten), Notizen zum Tag\n- Positive Momente: Datum und Uhrzeit (Datum), Beschreibung des Moments, Deine Stimmung (→ Stimmungskategorien), Zugehörige Aktivitäten (→ Aktivitäten), Wofür bist du dankbar?\n\nDu kannst:\n- Fragen zur App und den Daten beantworten\n- Hochgeladene Bilder und Dokumente analysieren\n- Texte zusammenfassen oder übersetzen\n- Bei der Dateneingabe helfen\n\nAntworte kurz und präzise. Verwende die gleiche Sprache wie der Nutzer.`;
+
+```
+
+## src/config/ai-features.ts
+```
+/**
+ * AI feature toggles per entity.
+ * Set to true to show "Foto scannen" button in the create/edit dialog.
+ * The agent can change these values — all other AI files are pre-generated.
+ */
+
+export const AI_PHOTO_SCAN: Record<string, boolean> = {
+  Aktivitaeten: true,
+  Stimmungskategorien: true,
+  TaeglicheStimmung: true,
+  PositiveMomente: true,
+};
+```

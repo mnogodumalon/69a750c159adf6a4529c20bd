@@ -1,0 +1,276 @@
+{
+  "appgroup_id": "69a750c159adf6a4529c20bd",
+  "appgroup_name": "Sonnenschein & Gl\u00fcck",
+  "apps": {
+    "aktivitaeten": {
+      "app_id": "69a750a14a90d7e3986895bf",
+      "name": "Aktivit\u00e4ten",
+      "controls": {
+        "aktivitaet_name": {
+          "identifier": "aktivitaet_name",
+          "label": "Name der Aktivit\u00e4t",
+          "type": "string",
+          "subtype": "text",
+          "fulltype": "string/text",
+          "description": "A string value not longer than 4000 characters (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "aktivitaet_beschreibung": {
+          "identifier": "aktivitaet_beschreibung",
+          "label": "Beschreibung",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "aktivitaet_kategorie": {
+          "identifier": "aktivitaet_kategorie",
+          "label": "Kategorie",
+          "type": "lookup",
+          "subtype": "select",
+          "fulltype": "lookup/select",
+          "description": "One selected option of multiple available options (or `null`/`None`).\n\nThe available options are defined in the `lookup_data` attribute of this control.\n\nThe field value will be the key in this `lookup_data` attribute (or `null`/`None`).\n\nDisplayed as single-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true,
+          "lookup_data": {
+            "sport": "Sport & Bewegung",
+            "sozial": "Soziale Aktivit\u00e4ten",
+            "kreativ": "Kreatives & Hobbys",
+            "natur": "Natur & Drau\u00dfen",
+            "entspannung": "Entspannung & Wellness",
+            "lernen": "Lernen & Entwicklung",
+            "sonstiges": "Sonstiges"
+          }
+        }
+      }
+    },
+    "stimmungskategorien": {
+      "app_id": "69a750a99c53392e0001a840",
+      "name": "Stimmungskategorien",
+      "controls": {
+        "kategorie_name": {
+          "identifier": "kategorie_name",
+          "label": "Name der Stimmungskategorie",
+          "type": "string",
+          "subtype": "text",
+          "fulltype": "string/text",
+          "description": "A string value not longer than 4000 characters (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "kategorie_beschreibung": {
+          "identifier": "kategorie_beschreibung",
+          "label": "Beschreibung",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "kategorie_emoji": {
+          "identifier": "kategorie_emoji",
+          "label": "Emoji (optional)",
+          "type": "string",
+          "subtype": "text",
+          "fulltype": "string/text",
+          "description": "A string value not longer than 4000 characters (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        }
+      }
+    },
+    "taegliche_stimmung": {
+      "app_id": "69a750aadef3fef6ef4c2856",
+      "name": "T\u00e4gliche Stimmung",
+      "controls": {
+        "eintrag_datum": {
+          "identifier": "eintrag_datum",
+          "label": "Datum",
+          "type": "date",
+          "subtype": "date",
+          "fulltype": "date/date",
+          "description": "A calendar date consisting of year, month and day (or `null`/`None`)\n\nThe field value will be a string in the format `<YYYY>-<MM>-<DD>` (or `null`/`None`).\n\nFor example: `2000-02-29`.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "eintrag_stimmung": {
+          "identifier": "eintrag_stimmung",
+          "label": "Deine Stimmung",
+          "type": "applookup",
+          "subtype": "select",
+          "fulltype": "applookup/select",
+          "description": "A reference to a LivingApp record from the target lookup app 'Stimmungskategorien' with the id `69a750a99c53392e0001a840` (or `null`/`None`).\n\nThe field value will be a valid record URL in the form `https://my.living-apps.de/rest/apps/69a750a99c53392e0001a840/<record-id>` (or `null`/`None`).\n\nDisplayed as single-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true,
+          "lookup_app": "https://my.living-apps.de/rest/apps/69a750a99c53392e0001a840"
+        },
+        "eintrag_aktivitaeten": {
+          "identifier": "eintrag_aktivitaeten",
+          "label": "Aktivit\u00e4ten",
+          "type": "multipleapplookup",
+          "subtype": "select",
+          "fulltype": "multipleapplookup/select",
+          "description": "Arbitrary number of referenced LivingApp records from the target lookup app 'Aktivit\u00e4ten' with the id `69a750a14a90d7e3986895bf`.\n\nThe field value will be a list of valid record URLs in the form `https://my.living-apps.de/rest/apps/69a750a14a90d7e3986895bf/<record-id>`.\n\nDisplayed as a multi-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true,
+          "lookup_app": "https://my.living-apps.de/rest/apps/69a750a14a90d7e3986895bf"
+        },
+        "eintrag_notizen": {
+          "identifier": "eintrag_notizen",
+          "label": "Notizen zum Tag",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        }
+      }
+    },
+    "positive_momente": {
+      "app_id": "69a750abcb3d90646af3ecbe",
+      "name": "Positive Momente",
+      "controls": {
+        "moment_zeitpunkt": {
+          "identifier": "moment_zeitpunkt",
+          "label": "Datum und Uhrzeit",
+          "type": "date",
+          "subtype": "datetimeminute",
+          "fulltype": "date/datetimeminute",
+          "description": "A specific moment in time consisting of year, month, day, hour and minute (or `null`/`None`)\n\nThe field value will be a string in the format `<YYYY>-<MM>-<DD>T<HH>:<MM>` (or `null`/`None`).\n\nFor example: `2000-02-29T11:30`.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "moment_beschreibung": {
+          "identifier": "moment_beschreibung",
+          "label": "Beschreibung des Moments",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": true,
+          "in_text": true,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        },
+        "moment_stimmung": {
+          "identifier": "moment_stimmung",
+          "label": "Deine Stimmung",
+          "type": "applookup",
+          "subtype": "select",
+          "fulltype": "applookup/select",
+          "description": "A reference to a LivingApp record from the target lookup app 'Stimmungskategorien' with the id `69a750a99c53392e0001a840` (or `null`/`None`).\n\nThe field value will be a valid record URL in the form `https://my.living-apps.de/rest/apps/69a750a99c53392e0001a840/<record-id>` (or `null`/`None`).\n\nDisplayed as single-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true,
+          "lookup_app": "https://my.living-apps.de/rest/apps/69a750a99c53392e0001a840"
+        },
+        "moment_aktivitaeten": {
+          "identifier": "moment_aktivitaeten",
+          "label": "Zugeh\u00f6rige Aktivit\u00e4ten",
+          "type": "multipleapplookup",
+          "subtype": "select",
+          "fulltype": "multipleapplookup/select",
+          "description": "Arbitrary number of referenced LivingApp records from the target lookup app 'Aktivit\u00e4ten' with the id `69a750a14a90d7e3986895bf`.\n\nThe field value will be a list of valid record URLs in the form `https://my.living-apps.de/rest/apps/69a750a14a90d7e3986895bf/<record-id>`.\n\nDisplayed as a multi-select field in HTML pages.",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true,
+          "lookup_app": "https://my.living-apps.de/rest/apps/69a750a14a90d7e3986895bf"
+        },
+        "moment_dankbarkeit": {
+          "identifier": "moment_dankbarkeit",
+          "label": "Wof\u00fcr bist du dankbar?",
+          "type": "string",
+          "subtype": "textarea",
+          "fulltype": "string/textarea",
+          "description": "A string value that can contain multiple lines of text (or `null`/`None`).",
+          "required": null,
+          "in_list": true,
+          "in_mobile_list": false,
+          "in_text": false,
+          "in_structured_search": false,
+          "in_fulltext_search": false,
+          "in_expert_search": true
+        }
+      }
+    }
+  },
+  "metadata": {
+    "apps_list": [
+      "Aktivit\u00e4ten",
+      "Stimmungskategorien",
+      "T\u00e4gliche Stimmung",
+      "Positive Momente"
+    ]
+  }
+}
