@@ -6,7 +6,9 @@
     "tengu_1p_event_batch_config": {
       "scheduledDelayMillis": 10000,
       "maxExportBatchSize": 400,
-      "maxQueueSize": 8192
+      "maxQueueSize": 8192,
+      "skipAuth": true,
+      "maxAttempts": 1
     },
     "tengu_claudeai_mcp_connectors": true,
     "tengu_event_sampling_config": {},
